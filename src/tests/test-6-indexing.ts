@@ -31,9 +31,11 @@ export async function testIndexing() {
 
     const embeddingService = new OpenAIEmbeddingService();
     const vectorStore = new QdrantVectorStore();
+    
     const indexingService = new IndexingService(
     embeddingService,
     vectorStore
 );
-await indexingService.index(chunks);
+await indexingService.rebuild(chunks);
+// await indexingService.index(chunks);
 }

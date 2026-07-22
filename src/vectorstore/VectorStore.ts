@@ -5,7 +5,11 @@ import { SearchOptions } from "./SearchOptions";
 export interface VectorStore {
   createCollection(): Promise<void>;
 
+  recreateCollection(): Promise<void>;
+
+
   upsert(vector: VectorDocument): Promise<void>;
+  upsertBatch(vectors: VectorDocument[]): Promise<void>;
 
   search(
     embedding: number[],

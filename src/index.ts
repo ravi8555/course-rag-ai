@@ -13,7 +13,9 @@ import { testParserComparison } from "./tests/test-2-parser-comparison";
 import { testChunker } from "./tests/test-3-chunker";
 import { testEmbeddings } from "./tests/test-4-embeddings";
 import { testSearch } from "./tests/test-5-search";
-import { testIndexing } from "./tests/test-6-indexing"; 
+import { testIndexing } from "./tests/test-6-indexing";
+import {testPromptBuilder} from "./tests/test-7-prompt" 
+import { testRAG } from "./tests/test-8-rag"; 
 
 // async function main() {
 //   console.log("🚀 Starting Course RAG AI Tests\n");
@@ -41,7 +43,11 @@ async function runSpecificTests() {
   // await testParser();
   // await testChunker();
   // await testSearch();
+  // await testEmbeddings();
+  // await testPromptBuilder();
+  
   await testIndexing()
+  await testRAG()
 
 }
 

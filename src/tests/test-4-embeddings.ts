@@ -38,10 +38,13 @@ export async function testEmbeddings() {
 
   // Store in vector DB
   const vectorStore = new QdrantVectorStore();
-  await vectorStore.createCollection();
+  // await vectorStore.createCollection();
+  await vectorStore.recreateCollection();
+  
   
   let upserted = 0;
-  for (const chunk of chunks.slice(0, 3)) { // Only first 3 for test
+  // for (const chunk of chunks.slice(0, 3)) { // Only first 3 for test
+  for (const chunk of chunks) { // Only first 3 for test
     const embedding = await embeddingService.embed(chunk.text);
     await vectorStore.upsert({ chunk, embedding });
     upserted++;

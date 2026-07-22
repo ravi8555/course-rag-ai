@@ -79,6 +79,7 @@ import { SearchOptions } from './SearchOptions'
 import { VectorSearchResult } from './VectorSearchResult'
 import { DocumentChunk } from "../types";
 import { VectorStore } from "./VectorStore";
+import { timeStamp } from "node:console";
 
 const COLLECTION_NAME = "course-rag";
 
@@ -90,14 +91,40 @@ export class QdrantVectorStore implements VectorStore {
         private readonly collectionName = COLLECTION_NAME
     ) {}
 
+    async upsert(vector: VectorDocument): Promise<void> {
+    await this.upsertBatch([vector]);
+}
+
+    async upsertBatch(
+    vectors: VectorDocument[]
+): Promise<void> {
+
+    if (vectors.length === 0) {
+        return;
+    }
+
+    const points = vectors.map(vector => ({
+        id: vector.chunk.id,
+        vector: vector.embedding,
+        payload: QdrantPayloadMapper.toPayload(vector.chunk),
+    }));
+
+    console.log(`📦 Batch inserting ${points.length} vectors...`);
+
+    await this.client.upsert(this.collectionName, {
+        wait: true,
+        points,
+    });
+
+    console.log(`✅ Batch insert completed`);
+}
+
   async createCollection() {
-
-
 
     const collections = await this.client.getCollections();
 
     const exists = collections.collections.some(
-      c => c.name === COLLECTION_NAME
+      c => c.name === this.collectionName
     );
 
     if (exists) {
@@ -115,22 +142,32 @@ export class QdrantVectorStore implements VectorStore {
     console.log("Collection created.");
   }
 
-  async upsert(vector: VectorDocument) {
-    
+  async recreateCollection(): Promise<void> {
 
-    await this.client.upsert(this.collectionName, {
-      wait: true,
-      points: [
-        {
-          id: vector.chunk.id,
-          vector: vector.embedding,
-          payload: QdrantPayloadMapper.toPayload(vector.chunk)
-        },
-      ],
-    });
+    const collections =
+        await this.client.getCollections();
 
-    console.log(`Inserted ${vector.chunk.id}`);
-  }
+    const exists =
+        collections.collections.some(
+            c => c.name === this.collectionName
+        );
+
+    if (exists) {
+
+        console.log("🗑️ Deleting existing collection...");
+
+        await this.client.deleteCollection(
+            this.collectionName
+        );
+
+    }
+
+    console.log("📦 Creating collection...");
+
+    await this.createCollection();
+
+}
+ 
 
   async search(
     embedding: number[],
