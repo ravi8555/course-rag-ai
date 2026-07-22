@@ -20,6 +20,7 @@ import {
   ChunkingOptions,
   DEFAULT_CHUNK_OPTIONS,
 } from "./ChunkingOptions";
+import { v4 as uuid } from "uuid";
 export class SemanticChunker {
 
     constructor(
@@ -97,7 +98,7 @@ export class SemanticChunker {
             .join(" ");
 
         return {
-            id: `${document.lesson.id}-${index}`,
+            id: uuid(),
 
             documentId: document.lesson.id,
 

@@ -26,6 +26,8 @@ import { TranscriptCleaner } from "./cleaner";
 
 import { SemanticChunker } from "./chunking";
 import {OpenAIEmbeddingService} from './embeddings'
+import  {QdrantVectorStore}  from "./vectorstore";
+
 
 async function main() {
   const content = await fs.readFile(
@@ -101,54 +103,53 @@ async function main() {
 
 
   const cleaner = new TranscriptCleaner();
-
   const cleanedTranscript = cleaner.clean(transcript);
 
   const chunker = new SemanticChunker();
 
   const chunks = chunker.chunk(cleanedTranscript);
 
-  console.log("====================================");
-  console.log(`Chunks Created : ${chunks.length}`);
-  console.log("====================================\n");
+//   console.log("====================================");
+//   console.log(`Chunks Created : ${chunks.length}`);
+//   console.log("====================================\n");
 
-//   chunks.forEach((chunk, index) => {
-//     console.log(`Chunk ${index + 1}`);
-//     console.log("-------------------------------");
+// //   chunks.forEach((chunk, index) => {
+// //     console.log(`Chunk ${index + 1}`);
+// //     console.log("-------------------------------");
 
-//     console.log(`ID       : ${chunk.id}`);
-//     console.log(`Start    : ${chunk.start}`);
-//     console.log(`End      : ${chunk.end}`);
+// //     console.log(`ID       : ${chunk.id}`);
+// //     console.log(`Start    : ${chunk.start}`);
+// //     console.log(`End      : ${chunk.end}`);
 
-//     console.log(
-//       `Duration : ${chunk.metadata.duration.toFixed(2)} sec`
-//     );
+// //     console.log(
+// //       `Duration : ${chunk.metadata.duration.toFixed(2)} sec`
+// //     );
 
-//     console.log(
-//       `Tokens   : ${chunk.metadata.tokenCount}`
-//     );
+// //     console.log(
+// //       `Tokens   : ${chunk.metadata.tokenCount}`
+// //     );
 
-//     console.log(
-//       `Segments : ${chunk.metadata.segmentIds.join(", ")}`
-//     );
+// //     console.log(
+// //       `Segments : ${chunk.metadata.segmentIds.join(", ")}`
+// //     );
 
-//     console.log("\nText:\n");
+// //     console.log("\nText:\n");
 
-//     console.log(chunk.text);
+// //     console.log(chunk.text);
 
-//     console.log("\n====================================\n");
-//   });
+// //     console.log("\n====================================\n");
+// //   });
 
-  console.table(
-  chunks.map((chunk) => ({
-    id: chunk.id,
-    start: chunk.start,
-    end: chunk.end,
-    duration: chunk.metadata.duration,
-    tokens: chunk.metadata.tokenCount,
-    segments: chunk.metadata.segmentIds.length,
-  }))
-);
+//   console.table(
+//   chunks.map((chunk) => ({
+//     id: chunk.id,
+//     start: chunk.start,
+//     end: chunk.end,
+//     duration: chunk.metadata.duration,
+//     tokens: chunk.metadata.tokenCount,
+//     segments: chunk.metadata.segmentIds.length,
+//   }))
+// );
 
 const embeddingService = new OpenAIEmbeddingService();
 
@@ -161,6 +162,22 @@ console.log("Embedding Dimension:", embedding.length);
 console.log("First 10 Values:");
 
 console.log(embedding.slice(0, 10));
+
+const vectorStore = new QdrantVectorStore();
+await vectorStore.createCollection();
+
+for (const chunk of chunks) {
+
+    const embedding =
+        await embeddingService.embed(chunk.text);
+
+    await vectorStore.upsert({
+        chunk,
+        embedding,
+    });
+
+}
+
 
   
 }
