@@ -36,6 +36,7 @@
 
 import { EmbeddingService } from "../embeddings";
 import { VectorStore } from "../vectorstore";
+import { SearchFilter } from "./SearchFilter";
 
 export class SemanticSearcher {
 
@@ -46,31 +47,19 @@ export class SemanticSearcher {
 
     async search(
         question: string,
+        filter?: SearchFilter,
         topK = 5
     ) {
 
         const embedding = await this.embeddingService.embed(question);
 const results = await this.vectorStore.search(
     embedding,
-    { limit: topK }
+    { limit: topK },
+    filter
 );
 
 return results
 
-// const unique = new Map<string, typeof results[0]>();
-
-// for (const result of results) {
-//     unique.set(result.chunk.id, result);
-// }
-
-// return Array.from(unique.values()).slice(0, topK);
-
-        // return this.vectorStore.search(
-        //     embedding,
-        //     {
-        //         limit: topK,
-        //     }
-        // );
 
     }
 

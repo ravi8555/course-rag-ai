@@ -6,39 +6,60 @@ import { Course, CourseLesson } from "./Course";
 
 export class CourseLoader {
 
+    
+
     async load(
-        directory: string,
-        courseId: string,
-        courseTitle: string
-    ): Promise<Course> {
+    directory: string,
+    courseId: string,
+    courseTitle: string
+): Promise<Course> {
 
-        const files = await fs.readdir(directory);
+    const files = await fs.readdir(directory);
 
-        const transcriptFiles = files
-            .filter(file =>
-                file.endsWith(".srt") ||
-                file.endsWith(".vtt")
-            )
-            .sort();
+    const transcriptMap = new Map<string, string>();
 
-        const lessons: CourseLesson[] = transcriptFiles.map((file, index) => ({
-    id: `lesson-${String(index + 1).padStart(3, "0")}`,
-    title: path.parse(file).name,
-    order: index + 1,
-    filePath: path.join(directory, file),
-    source: file.endsWith(".vtt") ? "vtt" : "srt",
-}));
+    for (const file of files) {
 
-        return {
+        const ext = path.extname(file);
 
-            id: courseId,
+        if (ext !== ".srt" && ext !== ".vtt") {
+            continue;
+        }
 
-            title: courseTitle,
+        const baseName = path.basename(file, ext);
 
-            lessons
-
-        };
-
+        // Prefer SRT over VTT
+        if (!transcriptMap.has(baseName) || ext === ".srt") {
+            transcriptMap.set(baseName, file);
+        }
     }
+
+    const transcriptFiles = [...transcriptMap.values()].sort();
+
+    const lessons: CourseLesson[] = transcriptFiles.map((file, index) => ({
+
+        id: `lesson-${String(index + 1).padStart(3, "0")}`,
+
+        title: path.parse(file).name,
+
+        order: index + 1,
+
+        filePath: path.join(directory, file),
+
+        source: file.endsWith(".vtt") ? "vtt" : "srt",
+
+    }));
+
+    return {
+
+        id: courseId,
+
+        title: courseTitle,
+
+        lessons,
+
+    };
+
+}
 
 }

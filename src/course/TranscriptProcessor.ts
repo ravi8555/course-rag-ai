@@ -1,56 +1,59 @@
 // src/course/TranscriptProcessor.ts
-import fs from "fs/promises";
-import path from "path";
+import fs from 'fs/promises'
+import path from 'path'
 
-import { CourseLesson } from "./Course";
+import { CourseLesson, Course } from './Course'
 
-import { SrtParser } from "../parsers/SrtParser";
-import { VttParser } from "../parsers/VttParser";
+import { SrtParser } from '../parsers/SrtParser'
+import { VttParser } from '../parsers/VttParser'
 
-import { TranscriptCleaner } from "../cleaner";
-import { SemanticChunker } from "../chunking";
+import { TranscriptCleaner } from '../cleaner'
+import { SemanticChunker } from '../chunking'
 
-import { DocumentChunk } from "../types";
+import { DocumentChunk } from '../types'
 
 export class TranscriptProcessor {
+  private readonly cleaner = new TranscriptCleaner()
 
-    private readonly cleaner =
-        new TranscriptCleaner();
+  private readonly chunker = new SemanticChunker()
 
-    private readonly chunker =
-        new SemanticChunker();
+  async process(
+    course: Course,
+    lesson: CourseLesson,
+  ): Promise<DocumentChunk[]> {
+    console.log(`📄 Processing ${lesson.title}`)
 
-    async process(
-        lesson: CourseLesson
-    ): Promise<DocumentChunk[]> {
+    const content = await fs.readFile(lesson.filePath, 'utf8')
 
-        console.log(`📄 Processing ${lesson.title}`);
+    const parser =
+      path.extname(lesson.filePath) === '.vtt'
+        ? new VttParser()
+        : new SrtParser()
 
-        const content =
-            await fs.readFile(
-                lesson.filePath,
-                "utf8"
-            );
-
-        const parser =
-            path.extname(lesson.filePath) === ".vtt"
-                ? new VttParser()
-                : new SrtParser();
-
-const transcript = parser.parse(content, {
-    lesson: {
+    const transcript = parser.parse(content, {
+      lesson: {
         id: lesson.id,
+
         title: lesson.title,
+
         order: lesson.order,
+
         source: lesson.source,
-    },
+      },
+    })
+
+    const cleaned = this.cleaner.clean(transcript)  
+     
+    const chunks = this.chunker.chunk(cleaned);
+
+chunks.forEach(chunk => {
+    chunk.metadata.courseId = course.id;
+    chunk.metadata.courseTitle = course.title;
+    chunk.metadata.lessonId = lesson.id;
+    chunk.metadata.lessonTitle = lesson.title;
+    chunk.metadata.lessonOrder = lesson.order;
 });
 
-        const cleaned =
-            this.cleaner.clean(transcript);
-
-        return this.chunker.chunk(cleaned);
-
-    }
-
+return chunks;
+  }
 }

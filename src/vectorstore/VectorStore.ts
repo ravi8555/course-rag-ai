@@ -1,6 +1,7 @@
 import { VectorDocument } from "./VectorDocument";
 import { VectorSearchResult } from "./VectorSearchResult";
 import { SearchOptions } from "./SearchOptions";
+import { SearchFilter } from "../retrieval/SearchFilter";
 
 export interface VectorStore {
   createCollection(): Promise<void>;
@@ -13,6 +14,7 @@ export interface VectorStore {
 
   search(
     embedding: number[],
-    options?: SearchOptions
+    options?: SearchOptions,
+    filter?: SearchFilter
   ): Promise<VectorSearchResult[]>;
 }

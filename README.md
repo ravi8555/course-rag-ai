@@ -344,10 +344,10 @@ Lesson:
 ## Sprint 3
 - [x] Multi-document Loading
 - [x] Course Indexing
-- [ ] Batch Course Embedding
-- [ ] Metadata Filtering
+- [x] Batch Course Embedding
+- [x] Metadata Filtering
 
-## Sprint 4
+<!-- -## Sprint 4
 - [ ] REST API
 - [ ] Express Server
 - [ ] Swagger Documentation
@@ -360,7 +360,7 @@ Lesson:
 ## Sprint 6
 - [ ] Authentication
 - [ ] Multi-user Support
-- [ ] Persistent Chat History
+- [ ] Persistent Chat History -->
 
 ---
 

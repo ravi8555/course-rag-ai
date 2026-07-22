@@ -1,76 +1,3 @@
-// // src/vectorstore/QdrantVectorStore.ts
-// import { qdrant } from "./QdrantClient";
-// import { VectorDocument } from "./VectorDocument";
-// import { QdrantPayloadMapper } from "./QdrantPayloadMapper";
-// import { SearchOptions } from './SearchOptions'
-// import { VectorSearchResult } from './VectorSearchResult'
-// import { DocumentChunk } from "../types";
-// import { VectorStore } from "./VectorStore";
-
-// const COLLECTION_NAME = "course-rag";
-
-// export class QdrantVectorStore implements VectorStore {
-
-//   async createCollection() {
-
-//     const collections = await qdrant.getCollections();
-
-//     const exists = collections.collections.some(
-//       c => c.name === COLLECTION_NAME
-//     );
-
-//     if (exists) {
-//       console.log("Collection already exists.");
-//       return;
-//     }
-
-//     await qdrant.createCollection(COLLECTION_NAME, {
-//       vectors: {
-//         size: 1536,
-//         distance: "Cosine",
-//       },
-//     });
-
-//     console.log("Collection created.");
-//   }
-
-//   async upsert(vector: VectorDocument) {
-    
-
-//     await qdrant.upsert(COLLECTION_NAME, {
-//       wait: true,
-//       points: [
-//         {
-//           id: vector.chunk.id,
-//           vector: vector.embedding,
-//           payload: QdrantPayloadMapper.toPayload(vector.chunk)
-//         },
-//       ],
-//     });
-
-//     console.log(`Inserted ${vector.chunk.id}`);
-//   }
-
-//   async search(
-//   embedding: number[],
-//   options?: SearchOptions
-// ): Promise<VectorSearchResult[]> {
-
-//   const response = await qdrant.query(COLLECTION_NAME, {
-//     query: embedding,
-//     limit: options?.limit ?? 5,
-//     with_payload: true,
-//   });
-
-//   return response.points.map((point: any) => ({
-//     score: point.score,
-//     chunk: point.payload as DocumentChunk,
-//   }));
-// }
-// }   
-
-
-
 // src/vectorstore/QdrantVectorStore.ts
 import { qdrant } from "./QdrantClient";
 import { VectorDocument } from "./VectorDocument";
@@ -79,6 +6,7 @@ import { SearchOptions } from './SearchOptions'
 import { VectorSearchResult } from './VectorSearchResult'
 import { DocumentChunk } from "../types";
 import { VectorStore } from "./VectorStore";
+import { SearchFilter } from "../retrieval";
 import { timeStamp } from "node:console";
 
 const COLLECTION_NAME = "course-rag";
@@ -90,6 +18,38 @@ export class QdrantVectorStore implements VectorStore {
     constructor(
         private readonly collectionName = COLLECTION_NAME
     ) {}
+
+    private buildFilter(filter?: SearchFilter) {
+        console.dir(filter, { depth: null });
+
+    if (!filter) {
+        return undefined;
+    }
+
+    const must: any[] = [];
+
+    if (filter.courseId) {
+        must.push({
+            key: "metadata.courseId",
+            match: {
+                value: filter.courseId,
+            },
+        });
+    }
+
+    if (filter.lessonId) {
+        must.push({
+            key: "metadata.lessonId",
+            match: {
+                value: filter.lessonId,
+            },
+        });
+    }
+
+    
+
+    return must.length ? { must } : undefined;
+}
 
     async upsert(vector: VectorDocument): Promise<void> {
     await this.upsertBatch([vector]);
@@ -171,22 +131,48 @@ export class QdrantVectorStore implements VectorStore {
 
   async search(
     embedding: number[],
-    options?: SearchOptions
+    options?: SearchOptions,
+    filter?: SearchFilter
 ): Promise<VectorSearchResult[]> {
 
-    const response = await this.client.query(
-        this.collectionName,
-        {
-            query: embedding,
-            limit: options?.limit ?? 5,
-            with_payload: true,
-        }
-    );
+    const qdrantFilter = this.buildFilter(filter);
 
+console.dir(qdrantFilter, { depth: null });
+
+    const response = await this.client.query(
+    this.collectionName,
+    {
+        query: embedding,
+        limit: options?.limit ?? 5,
+        with_payload: true,
+        filter: this.buildFilter(filter),
+    }
+);
+
+console.dir(response.points[0].payload, {
+    depth: null,
+});
     return response.points.map((point: any) => ({
         score: point.score,
         chunk: point.payload as DocumentChunk,
     }));
+
+}
+
+async debugPayload() {
+
+    const response = await this.client.scroll(
+        this.collectionName,
+        {
+            limit: 1,
+            with_payload: true,
+            with_vector: false,
+        }
+    );
+
+    console.dir(response.points[0], {
+        depth: null,
+    });
 
 }
 }   
