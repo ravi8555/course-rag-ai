@@ -28,6 +28,8 @@ import { SemanticChunker } from "./chunking";
 import {OpenAIEmbeddingService} from './embeddings'
 import  {QdrantVectorStore}  from "./vectorstore";
 
+import {SemanticSearcher} from './retrieval'
+
 
 async function main() {
   const content = await fs.readFile(
@@ -104,7 +106,6 @@ async function main() {
 
   const cleaner = new TranscriptCleaner();
   const cleanedTranscript = cleaner.clean(transcript);
-
   const chunker = new SemanticChunker();
 
   const chunks = chunker.chunk(cleanedTranscript);
@@ -150,34 +151,67 @@ async function main() {
 //     segments: chunk.metadata.segmentIds.length,
 //   }))
 // );
+// // test -4
+// const embeddingService = new OpenAIEmbeddingService();
 
-const embeddingService = new OpenAIEmbeddingService();
+// const embedding = await embeddingService.embed(
+//   chunks[0].text
+// );
 
-const embedding = await embeddingService.embed(
-  chunks[0].text
+// console.log("Embedding Dimension:", embedding.length);
+
+// console.log("First 10 Values:");
+
+// console.log(embedding.slice(0, 10));
+
+// const vectorStore = new QdrantVectorStore();
+// await vectorStore.createCollection();
+
+// for (const chunk of chunks) {
+
+//     const embedding =
+//         await embeddingService.embed(chunk.text);
+
+//     await vectorStore.upsert({
+//         chunk,
+//         embedding,
+//     });
+
+// }
+
+// test -5 
+const searcher = new SemanticSearcher();
+
+const results = await searcher.search(
+    "What are the types of mobile apps?"
 );
 
-console.log("Embedding Dimension:", embedding.length);
 
-console.log("First 10 Values:");
+console.log("\n========================");
 
-console.log(embedding.slice(0, 10));
+console.log("SEARCH RESULTS");
 
-const vectorStore = new QdrantVectorStore();
-await vectorStore.createCollection();
+console.log("========================");
 
-for (const chunk of chunks) {
+for (const result of results) {
 
-    const embedding =
-        await embeddingService.embed(chunk.text);
+    console.log(
+        `Score: ${result.score.toFixed(3)}`
+    );
 
-    await vectorStore.upsert({
-        chunk,
-        embedding,
-    });
+    console.log(
+        `Lesson: ${result.chunk.metadata.lessonTitle}`
+    );
+
+    console.log(
+        `${result.chunk.start} - ${result.chunk.end}`
+    );
+
+    console.log(result.chunk.text);
+
+    console.log("------------------------");
 
 }
-
 
   
 }
