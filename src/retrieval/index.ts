@@ -1,2 +1,2 @@
-export * from './SearchResult'
+export * from './SearchResultwwww'
 export * from './SemanticSearcher'
