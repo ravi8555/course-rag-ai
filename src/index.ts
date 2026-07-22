@@ -16,7 +16,8 @@ import { testSearch } from "./tests/test-5-search";
 import { testIndexing } from "./tests/test-6-indexing";
 import {testPromptBuilder} from "./tests/test-7-prompt" 
 import { testRAG } from "./tests/test-8-rag"; 
-
+import { testCourseLoader } from "./tests/test-9-course-loader";
+import { testTranscriptProcessor } from "./tests/test-10-transcript-processor";
 // async function main() {
 //   console.log("🚀 Starting Course RAG AI Tests\n");
 //   console.log("=".repeat(50));
@@ -46,9 +47,12 @@ async function runSpecificTests() {
   // await testEmbeddings();
   // await testPromptBuilder();
   
-  await testIndexing()
-  await testRAG()
+  // await testIndexing()
+  // await testRAG()
 
+  // await testCourseLoader()
+  
+  await testTranscriptProcessor()
 }
 
 // Choose which function to run
